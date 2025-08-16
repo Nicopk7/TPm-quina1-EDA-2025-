@@ -1,0 +1,10 @@
+# depslib dependency file v1.0
+1755299954 source:f:\universidad\eda\tpm1\máquina1\main.c
+	<stdio.h>
+	<stdlib.h>
+
+1755298892 f:\universidad\eda\tpm1\máquina1\alumno.h
+	<stdlib.h>
+	<stdio.h>
+	<string.h>
+
