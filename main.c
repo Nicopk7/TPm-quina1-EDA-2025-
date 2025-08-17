@@ -6,7 +6,7 @@
 #define MAXALUMNOS 130
 
 typedef struct{
-    char codigo[7];
+    char codigo[8];
     char nombreapellido[80];
     char correo[23];
     int nota;
@@ -15,10 +15,20 @@ typedef struct{
 
 Alumno LSO[MAXALUMNOS];
 
+//PROTOTIPOS
+void localizar(char codigo[], int *exito, int *posicion, int contador);
+int alta(Alumno a, int *contador);
+int baja(char codigo[], int *contador);
+Alumno evocar(char codigo[], int contador);
+int modificarAlumno(Alumno a, int contador);
+int memorizacionprevia(int *contador);
+void mostrarLSO(int contador);
+
 int main()
 {
     int menu=0, contadorAlumnos=0, cantidad=0, archivo=0;
-    Alumno a;
+    Alumno nuevo;
+    char codigoaux[7];
 
     //MENU
     do{
@@ -40,32 +50,89 @@ int main()
             case 1: if(contadorAlumnos==MAXALUMNOS){
                         printf("No se pueden cargar más alumnos (lista llena).\n");
                     }
-                    else{printf("Ingrese cuantos alumnos quiere ingresar\n");
-                         scanf("%d",&cantidad);
-                         for(int i = 0; i < cantidad; i++) //altaAlumno(&contador, LSO)
-                        printf("Ahora hay %d alumnos cargados.\n", contadorAlumnos);
+                    else{
+                        printf("Ingrese el codigo del alumno: ");
+                        scanf("%s", nuevo.codigo);
+
+                        printf("Ingrese el nombre y apellido: ");
+                        scanf(" %[^\n]", nuevo.nombreapellido);
+
+                        printf("Ingrese el correo: ");
+                        scanf("%s", nuevo.correo);
+
+                        printf("Ingrese la condicion final (ej: Promociona, regular, libre, ausente): ");
+                        scanf(" %[^\n]", nuevo.condicionFinal);
+
+                        printf("Ingrese la nota: ");
+                        scanf("%d", &nuevo.nota);
+                        int resultadoAlta = alta(nuevo, &contadorAlumnos);
+                        if(resultadoAlta == 1){
+                            printf("Se ha cargado el alumno correctamente\n");
+                            printf("Ahora hay %d alumnos cargados\n", contadorAlumnos);
+                        }
+                        else{
+                            printf("No se pudo cargar el alumno\n\n");
+                        }
                         }
                     break;
 
             case 2: if(contadorAlumnos == 0){
                         printf("No hay alumnos registrados \n");
                     }
-                    //else borrar_prestador(&l, &contador);
+                    else{
+                        printf("Ingrese el codigo del alumno que desea eliminar: ");
+                        scanf("%s", nuevo.codigo);
+                        int resultadoBaja = baja(nuevo.codigo, &contadorAlumnos);
+                        if(resultadoBaja == 1) printf("Se elimino el alumno con exito\n");
+                        else printf("No se pudo eliminar el alumno\n");
+                    }
                     break;
 
             case 3: if(contadorAlumnos == 0){
                         printf("No hay alumnos registrados \n");
                     }
-                    //else modificar_prestador(&l, &contador);
+                    else{
+                        printf("Ingrese el codigo del alumno que desea modificar: ");
+                        scanf("%s", nuevo.codigo);
+                        printf("Ingrese el nombre y apellido: ");
+                        scanf(" %[^\n]", nuevo.nombreapellido);
+                        printf("Ingrese el correo: ");
+                        scanf("%s", nuevo.correo);
+                        printf("Ingrese la condicion final (ej: Promociona, regular, libre, ausente): ");
+                        scanf(" %[^\n]", nuevo.condicionFinal);
+                        printf("Ingrese la nota: ");
+                        scanf("%d", &nuevo.nota);
+
+                        int resultadoModificar = modificarAlumno(nuevo, contadorAlumnos);
+                        if (resultadoModificar == 1) printf("Se modifico al alumno con exito\n");
+                        else printf("No se pudo modificar al alumno (Verifique si se encuentra registrado)");
+                    }
                     break;
 
             case 4: if(contadorAlumnos == 0){
                         printf("No hay alumnos registrados \n");
                     }
-                    //else mostrar_prestador(l);
+                    else{
+                        printf("Ingrese el codigo del alumno que desea buscar: ");
+                        scanf("%s", codigoaux);
+                        nuevo = evocar(codigoaux, contadorAlumnos);
+                        if(strcmp(nuevo.codigo, "-1") == 0){
+                            printf("No se encontro el alumno\n");
+                        }
+                        else{
+                            printf("\n--- Datos del Alumno ---\n");
+                            printf("Codigo: %s\n", nuevo.codigo);
+                            printf("Nombre: %s\n", nuevo.nombreapellido);
+                            printf("Correo: %s\n", nuevo.correo);
+                            printf("Condicion final: %s\n", nuevo.condicionFinal);
+                            printf("Nota: %d\n", nuevo.nota);
+                            printf("------------------------\n");
+                        }
+                    }
+
                     break;
 
-            case 5:  //archivo= memorizacionprevia(LSO,&contadorAlumnos);
+            case 5:  archivo = memorizacionprevia(&contadorAlumnos);
                       if (archivo==0){printf("No se pudo cargar el archivo \n");}
                                 else {printf("Se cargo el archivo con exito \n");}
                     break;
@@ -99,39 +166,41 @@ void localizar(char codigo[], int *exito, int *posicion, int contador) {
 }
 
 
-int alta(Alumno a, int *exito, int *posicion, int *contador) {
-    localizar(a.codigo, exito, posicion, *contador);
-    if (*exito == 1) {
+int alta(Alumno a, int *contador) {
+    int exito = 0, posicion = 0, j = 0;
+    localizar(a.codigo, &exito, &posicion, *contador);
+    if (exito == 1) {
         return 0; // ya existe, alta NO exitosa
     }
     if (*contador >= MAXALUMNOS) {
         return 2; // lista llena, no se puede insertar
     }
-    for (int j = *contador; j > *posicion; j--) {
+    for (j = *contador; j > posicion; j--) {
         LSO[j] = LSO[j - 1];
     }
-    LSO[*posicion] = a;
+    LSO[posicion] = a;
     (*contador)++;
 
     return 1; // alta exitosa
 }
 
 
-int baja(Alumno a, int *exito, int *posicion, int *contador) {
-    localizar(a.codigo, exito, posicion, *contador);
-    if (*exito == 0) {
+int baja(char codigo[], int *contador) {
+    int exito = 0, posicion = 0;
+    localizar(codigo, &exito, &posicion, *contador);
+    if (exito == 0) {
         return 0; // NO encontrado
     }
     // comparar todos los campos
-    Alumno b = LSO[*posicion];
-    if (strcmp(a.codigo, b.codigo) != 0 ||
-        strcmp(a.nombreapellido, b.nombreapellido) != 0 ||
-        strcmp(a.correo, b.correo) != 0 ||
-        a.nota != b.nota ||
-        strcmp(a.condicionFinal, b.condicionFinal) != 0) {
+    Alumno b = LSO[posicion];
+    if (strcmp(LSO[posicion].codigo, b.codigo) != 0 ||
+        strcmp(LSO[posicion].nombreapellido, b.nombreapellido) != 0 ||
+        strcmp(LSO[posicion].correo, b.correo) != 0 ||
+        LSO[posicion].nota != b.nota ||
+        strcmp(LSO[posicion].condicionFinal, b.condicionFinal) != 0) {
         return 0; // los datos no coinciden
     }
-    for (int j = *posicion; j < *contador - 1; j++) {
+    for (int j = posicion; j < *contador - 1; j++) {
         LSO[j] = LSO[j + 1];
     }
     (*contador)--;
@@ -139,13 +208,14 @@ int baja(Alumno a, int *exito, int *posicion, int *contador) {
 }
 
 
-Alumno evocar(char codigo[], int *exito, int *posicion, int contador) {
+Alumno evocar(char codigo[], int contador) {
+    int exito = 0, posicion = 0;
     Alumno aux;
-    localizar(codigo, exito, posicion, contador);
-    if (*exito == 1) { // encontrado
-        return LSO[*posicion]; // más simple: devolver el alumno directamente
+    localizar(codigo, &exito, &posicion, contador);
+    if (exito == 1) { // encontrado
+        return LSO[posicion];
     } else {
-        strcpy(aux.codigo, "");
+        strcpy(aux.codigo, "-1");
         strcpy(aux.nombreapellido, "");
         strcpy(aux.correo, "");
         strcpy(aux.condicionFinal, "");
@@ -154,32 +224,72 @@ Alumno evocar(char codigo[], int *exito, int *posicion, int contador) {
     }
 }
 
+int modificarAlumno(Alumno a, int contador){
+    int exito = 0, posicion = 0;
+    localizar(a.codigo, &exito, &posicion, contador);
+    if(exito == 1){
+        LSO[posicion] = a;
+        strcpy(LSO[posicion].codigo, a.codigo);
+        return 1;
+    }
+    else return 0;
+}
+
 
 int memorizacionprevia(int *contador) {
     FILE *fp = fopen("Alumnos.txt", "r");
     Alumno aux;
+    char buffer[100];  // buffer temporal para leer líneas
+
     if (fp == NULL) {
         printf("No se pudo abrir el archivo.\n");
         return 0; // error al abrir archivo
     }
+
     while (!feof(fp) && *contador < MAXALUMNOS) {
-        // Leer los campos en el orden en que aparecen en el archivo
-        if (fscanf(fp, "%7s", aux.codigo) != 1) break;
-        fscanf(fp, " %[^\n]", aux.nombreapellido);
-        fscanf(fp, " %[^\n]", aux.correo);
-        fscanf(fp, "%d", &aux.nota);
-        fscanf(fp, " %[^\n]", aux.condicionFinal);
-        int exito, pos;
-        if (!alta(aux, &exito, &pos, contador, MAXALUMNOS)) {
+
+        if (fgets(buffer, sizeof(buffer), fp) == NULL) break;
+        buffer[strcspn(buffer, "\n")] = 0;
+        strncpy(aux.codigo, buffer, 8);
+        aux.codigo[7] = '\0';
+
+
+        if (fgets(buffer, sizeof(buffer), fp) == NULL) break;
+        buffer[strcspn(buffer, "\n")] = 0;
+        strncpy(aux.nombreapellido, buffer, 80);
+        aux.nombreapellido[79] = '\0';
+
+
+        if (fgets(buffer, sizeof(buffer), fp) == NULL) break;
+        buffer[strcspn(buffer, "\n")] = 0;
+        strncpy(aux.correo, buffer, 23);
+        aux.correo[22] = '\0';
+
+
+        if (fgets(buffer, sizeof(buffer), fp) == NULL) break;
+        aux.nota = atoi(buffer);
+
+
+        if (fgets(buffer, sizeof(buffer), fp) == NULL) break;
+        buffer[strcspn(buffer, "\n")] = 0;
+        strncpy(aux.condicionFinal, buffer, 10);
+        aux.condicionFinal[9] = '\0';
+
+
+        if (!alta(aux, contador)) {
             printf("No se pudo cargar el alumno con código %s (duplicado o lista llena)\n", aux.codigo);
         }
     }
+
     fclose(fp);
+
     if (*contador == MAXALUMNOS) {
         return 3; // lista llena
     }
+
     return 1; // carga exitosa
 }
+
 
 
 void mostrarLSO(int contador){
